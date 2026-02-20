@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>LENS License Panel</title>
+
+<style>
+
+body{
+
+background:#09090b;
+color:white;
+font-family:Arial;
+text-align:center;
+padding-top:50px;
+
+}
+
+.box{
+
+background:#18181b;
+padding:20px;
+border-radius:10px;
+width:400px;
+margin:auto;
+
+}
+
+button{
+
+margin-top:10px;
+padding:10px;
+width:100%;
+
+}
+
+input{
+
+padding:10px;
+width:100%;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box" id="login">
+
+<h2>Admin Login</h2>
+
+<input id="adminKey" placeholder="Senha ADMIN">
+
+<button onclick="login()">Entrar</button>
+
+</div>
+
+<div class="box" id="panel" style="display:none;">
+
+<h2>Painel LENS</h2>
+
+<p>ADMIN KEY:</p>
+
+<input id="adminKeyValue">
+
+<button onclick="setAdmin()">Salvar ADMIN</button>
+
+<p>USER KEY:</p>
+
+<input id="userKeyValue">
+
+<button onclick="setUser()">Salvar USER</button>
+
+</div>
+
+<script>
+
+async function login(){
+
+const key=document.getElementById("adminKey").value;
+
+const res=await fetch("/admin-login",{
+
+method:"POST",
+
+headers:{"Content-Type":"application/json"},
+
+body:JSON.stringify({key})
+
+});
+
+const data=await res.json();
+
+if(data.authorized){
+
+document.getElementById("login").style.display="none";
+
+document.getElementById("panel").style.display="block";
+
+load();
+
+}else{
+
+alert("Senha incorreta");
+
+}
+
+}
+
+async function load(){
+
+const res=await fetch("/keys");
+
+const data=await res.json();
+
+document.getElementById("adminKeyValue").value=data.adminKey;
+
+document.getElementById("userKeyValue").value=data.userKey;
+
+}
+
+async function setUser(){
+
+const key=document.getElementById("userKeyValue").value;
+
+await fetch("/set-user",{
+
+method:"POST",
+
+headers:{"Content-Type":"application/json"},
+
+body:JSON.stringify({key})
+
+});
+
+alert("USER KEY atualizada");
+
+}
+
+async function setAdmin(){
+
+const key=document.getElementById("adminKeyValue").value;
+
+await fetch("/set-admin",{
+
+method:"POST",
+
+headers:{"Content-Type":"application/json"},
+
+body:JSON.stringify({key})
+
+});
+
+alert("ADMIN KEY atualizada");
+
+}
+
+</script>
+
+</body>
+
+</html>
