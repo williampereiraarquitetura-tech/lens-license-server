@@ -2,9 +2,10 @@
   "licenses": [
     {
       "deviceId": "243528739629f6753b1de833293d4899432d6d6b15f43fe42b16d37d42dc2a7a",
-      "active": false,
+      "active": true,
       "expira": "2099-12-31"
     }
   ]
 }
+
 
