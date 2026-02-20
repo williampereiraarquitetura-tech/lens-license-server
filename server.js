@@ -5,205 +5,113 @@ const cors = require("cors");
 
 const app = express();
 
-////////////////////////////////////////////////////////////
-// CONFIGURAÇÕES
-////////////////////////////////////////////////////////////
-
 const PORT = process.env.PORT || 3000;
 
-const DB_FILE = path.join(__dirname, "licenses.json");
-
-////////////////////////////////////////////////////////////
-// MIDDLEWARE
-////////////////////////////////////////////////////////////
+const DB_FILE = path.join(__dirname, "keys.json");
 
 app.use(cors());
-
 app.use(express.json());
+app.use(express.static(__dirname));
 
 ////////////////////////////////////////////////////////////
-// BANCO DE DADOS
+// DATABASE
 ////////////////////////////////////////////////////////////
 
-function loadDB() {
+function loadDB(){
 
-    if (!fs.existsSync(DB_FILE)) {
+    if(!fs.existsSync(DB_FILE)){
 
-        const initial = {
-            licenses: []
-        };
-
-        fs.writeFileSync(
-            DB_FILE,
-            JSON.stringify(initial, null, 2)
-        );
+        fs.writeFileSync(DB_FILE, JSON.stringify({
+            adminKey:"ADMIN-1234",
+            userKey:"USER-1234"
+        },null,2));
 
     }
 
-    const raw = fs.readFileSync(DB_FILE);
-
-    return JSON.parse(raw);
+    return JSON.parse(fs.readFileSync(DB_FILE));
 
 }
 
-function saveDB(db) {
+function saveDB(db){
 
-    fs.writeFileSync(
-        DB_FILE,
-        JSON.stringify(db, null, 2)
-    );
+    fs.writeFileSync(DB_FILE, JSON.stringify(db,null,2));
 
 }
 
 ////////////////////////////////////////////////////////////
-// ENDPOINT PRINCIPAL — VALIDAR LICENÇA
+// VALIDATE
 ////////////////////////////////////////////////////////////
 
-app.post("/validate", (req, res) => {
+app.post("/validate",(req,res)=>{
 
-    try {
+    const {key} = req.body;
 
-        const { deviceId } = req.body;
+    const db = loadDB();
 
-        if (!deviceId) {
-
-            return res.json({
-                authorized: false,
-                error: "deviceId ausente"
-            });
-
-        }
-
-        const db = loadDB();
-
-        const license = db.licenses.find(
-            l => l.deviceId === deviceId
-        );
-
-        if (!license) {
-
-            return res.json({
-                authorized: false
-            });
-
-        }
-
-        if (!license.active) {
-
-            return res.json({
-                authorized: false
-            });
-
-        }
-
-        if (new Date() > new Date(license.expira)) {
-
-            return res.json({
-                authorized: false,
-                error: "licença expirada"
-            });
-
-        }
+    if(key===db.adminKey){
 
         return res.json({
-            authorized: true,
-            license: license
+            authorized:true,
+            role:"admin"
         });
 
     }
-    catch (err) {
+
+    if(key===db.userKey){
 
         return res.json({
-            authorized: false,
-            error: "erro interno"
+            authorized:true,
+            role:"user"
         });
 
     }
+
+    res.json({
+        authorized:false
+    });
 
 });
 
 ////////////////////////////////////////////////////////////
-// ENDPOINT ADMIN — CRIAR LICENÇA
+// CHANGE ADMIN KEY
 ////////////////////////////////////////////////////////////
 
-app.post("/create", (req, res) => {
+app.post("/set-admin",(req,res)=>{
 
-    try {
+    const {key} = req.body;
 
-        const { deviceId, expira } = req.body;
+    const db = loadDB();
 
-        if (!deviceId) {
+    db.adminKey=key;
 
-            return res.json({
-                success: false,
-                error: "deviceId obrigatório"
-            });
+    saveDB(db);
 
-        }
-
-        const db = loadDB();
-
-        const exists = db.licenses.find(
-            l => l.deviceId === deviceId
-        );
-
-        if (exists) {
-
-            return res.json({
-                success: false,
-                error: "já existe"
-            });
-
-        }
-
-        const newLicense = {
-
-            deviceId: deviceId,
-
-            active: true,
-
-            expira: expira || "2099-12-31",
-
-            createdAt: new Date().toISOString()
-
-        };
-
-        db.licenses.push(newLicense);
-
-        saveDB(db);
-
-        return res.json({
-            success: true,
-            license: newLicense
-        });
-
-    }
-    catch {
-
-        return res.json({
-            success: false
-        });
-
-    }
+    res.json({success:true});
 
 });
 
 ////////////////////////////////////////////////////////////
-// STATUS DO SERVIDOR
+// CHANGE USER KEY
 ////////////////////////////////////////////////////////////
 
-app.get("/", (req, res) => {
+app.post("/set-user",(req,res)=>{
 
-    res.send("LENS License Server Online");
+    const {key} = req.body;
+
+    const db = loadDB();
+
+    db.userKey=key;
+
+    saveDB(db);
+
+    res.json({success:true});
 
 });
 
 ////////////////////////////////////////////////////////////
-// INICIAR SERVIDOR
-////////////////////////////////////////////////////////////
 
-app.listen(PORT, () => {
+app.listen(PORT,()=>{
 
-    console.log("LENS License Server running on port", PORT);
+    console.log("License Server Running");
 
 });
