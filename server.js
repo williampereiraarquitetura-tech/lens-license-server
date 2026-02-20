@@ -7,7 +7,7 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-const DB_FILE = path.join(__dirname, "keys.json");
+const DB_FILE = path.join(__dirname,"keys.json");
 
 app.use(cors());
 app.use(express.json());
@@ -21,9 +21,12 @@ function loadDB(){
 
     if(!fs.existsSync(DB_FILE)){
 
-        fs.writeFileSync(DB_FILE, JSON.stringify({
-            adminKey:"ADMIN-1234",
-            userKey:"USER-1234"
+        fs.writeFileSync(DB_FILE,JSON.stringify({
+
+            adminKey:"ADMIN-LENS-2026",
+
+            userKey:"USER-LENS-2026"
+
         },null,2));
 
     }
@@ -34,19 +37,19 @@ function loadDB(){
 
 function saveDB(db){
 
-    fs.writeFileSync(DB_FILE, JSON.stringify(db,null,2));
+    fs.writeFileSync(DB_FILE,JSON.stringify(db,null,2));
 
 }
 
 ////////////////////////////////////////////////////////////
-// VALIDATE
+// VALIDATE LOGIN
 ////////////////////////////////////////////////////////////
 
 app.post("/validate",(req,res)=>{
 
-    const {key} = req.body;
+    const {key}=req.body;
 
-    const db = loadDB();
+    const db=loadDB();
 
     if(key===db.adminKey){
 
@@ -66,39 +69,49 @@ app.post("/validate",(req,res)=>{
 
     }
 
-    res.json({
-        authorized:false
-    });
+    res.json({authorized:false});
 
 });
 
 ////////////////////////////////////////////////////////////
-// CHANGE ADMIN KEY
+// ADMIN LOGIN PANEL
 ////////////////////////////////////////////////////////////
 
-app.post("/set-admin",(req,res)=>{
+app.post("/admin-login",(req,res)=>{
 
-    const {key} = req.body;
+    const {key}=req.body;
 
-    const db = loadDB();
+    const db=loadDB();
 
-    db.adminKey=key;
+    if(key===db.adminKey){
 
-    saveDB(db);
+        return res.json({authorized:true});
 
-    res.json({success:true});
+    }
+
+    res.json({authorized:false});
 
 });
 
 ////////////////////////////////////////////////////////////
-// CHANGE USER KEY
+// GET KEYS (ADMIN ONLY)
+////////////////////////////////////////////////////////////
+
+app.get("/keys",(req,res)=>{
+
+    res.json(loadDB());
+
+});
+
+////////////////////////////////////////////////////////////
+// SET USER KEY
 ////////////////////////////////////////////////////////////
 
 app.post("/set-user",(req,res)=>{
 
-    const {key} = req.body;
+    const {key}=req.body;
 
-    const db = loadDB();
+    const db=loadDB();
 
     db.userKey=key;
 
@@ -109,9 +122,35 @@ app.post("/set-user",(req,res)=>{
 });
 
 ////////////////////////////////////////////////////////////
+// SET ADMIN KEY
+////////////////////////////////////////////////////////////
+
+app.post("/set-admin",(req,res)=>{
+
+    const {key}=req.body;
+
+    const db=loadDB();
+
+    db.adminKey=key;
+
+    saveDB(db);
+
+    res.json({success:true});
+
+});
+
+////////////////////////////////////////////////////////////
+
+app.get("/",(req,res)=>{
+
+    res.sendFile(path.join(__dirname,"panel.html"));
+
+});
+
+////////////////////////////////////////////////////////////
 
 app.listen(PORT,()=>{
 
-    console.log("License Server Running");
+    console.log("LENS License Server Running");
 
 });
